@@ -95,7 +95,7 @@ namespace fbide {
         template<typename T, typename = std::enable_if<is_one_of<T, VARIANT_TYPE_LIST>()>>
         inline const boost::optional<T&> Get()
         {
-            if (GetType() == GetTypeOf<T>()) {
+            if (m_val->type() == typeid(T)) {
                 return {boost::get<T&>(*m_val)};
             }
             return {};
@@ -105,7 +105,7 @@ namespace fbide {
         template<typename T, typename = std::enable_if<is_one_of<T, VARIANT_TYPE_LIST>()>>
         inline const boost::optional<const T&> Get() const
         {
-            if (GetType() == GetTypeOf<T>()) {
+            if (m_val->type() == typeid(T)) {
                 return {boost::get<T&>(*m_val)};
             }
             return {};
@@ -115,29 +115,6 @@ namespace fbide {
         //----------------------------------------------------------------------
         // Query value type
         //----------------------------------------------------------------------
-        
-        /**
-         * Get Type constant for the given type
-         */
-        template<typename T, typename = std::enable_if<is_one_of<T, VARIANT_TYPE_LIST>()>>
-        static constexpr Type GetTypeOf()
-        {
-            if (std::is_same<T, std::nullptr_t>()) {
-                return Type::Null;
-            } else if (std::is_same<T, String>()) {
-                return Type::String;
-            } else if (std::is_same<T, bool>()) {
-                return Type::Bool;
-            } else if (std::is_same<T, int>()) {
-                return Type::Int;
-            } else if (std::is_same<T, double>()) {
-                return Type::Double;
-            } else if (std::is_same<T, Array>()) {
-                return Type::Array;
-            } else if (std::is_same<T, Map>()) {
-                return Type::Map;
-            }
-        }
         
         
         String GetTypeName() const;
