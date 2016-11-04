@@ -8,7 +8,7 @@
 #pragma once
 #include "Utils.hpp"
 
-#define VARIANT_TYPE_LIST std::nullptr_t, String, bool, int, double, Array, Map
+#define FBIDE_CONFIG_TYPES std::nullptr_t, String, bool, int, double, Array, Map
 
 //
 // Goal:
@@ -92,7 +92,7 @@ namespace fbide {
         inline const boost::optional<const Map &> GetMap() const { return Get<Map>(); }
         
         
-        template<typename T, typename = std::enable_if<is_one_of<T, VARIANT_TYPE_LIST>()>>
+        template<typename T, typename = std::enable_if<is_one_of<T, FBIDE_CONFIG_TYPES>()>>
         inline const boost::optional<T&> Get()
         {
             if (m_val->type() == typeid(T)) {
@@ -102,7 +102,7 @@ namespace fbide {
         }
         
         
-        template<typename T, typename = std::enable_if<is_one_of<T, VARIANT_TYPE_LIST>()>>
+        template<typename T, typename = std::enable_if<is_one_of<T, FBIDE_CONFIG_TYPES>()>>
         inline const boost::optional<const T&> Get() const
         {
             if (m_val->type() == typeid(T)) {
@@ -110,6 +110,40 @@ namespace fbide {
             }
             return {};
         }
+        
+        
+        template<typename T, typename = std::enable_if<is_one_of<T,  std::nullptr_t, String, bool, int, double>()>, typename ArrayType = std::vector<std::reference_wrapper<T>>>
+        inline const boost::optional<ArrayType> GetArray()
+        {
+            if (!IsArray()) {
+                return {};
+            }
+            auto & arr = boost::get<Array&>(*m_val);
+            auto res = boost::make_optional(ArrayType());
+            for (auto & value : arr) {
+                if (value.m_val->type() == typeid(T)) {
+                    res->emplace_back(boost::get<T&>(*value.m_val));
+                }
+            }
+            return res;
+        }
+        
+        
+//        template<typename T, typename = std::enable_if<is_one_of<T, FBIDE_CONFIG_TYPES>()>, typename ArrayType = std::vector<std::reference_wrapper<const T>>>
+//        inline const boost::optional<ArrayType> GetArray() const
+//        {
+//            if (!IsArray()) {
+//                return {};
+//            }
+//            auto & arr = boost::get<Array&>(*m_val);
+//            auto res = boost::make_optional(ArrayType());
+//            for (auto & value : arr) {
+//                if (value.m_val->type() == typeid(T)) {
+//                    res->emplace_back(boost::get<T&>(*value.m_val));
+//                }
+//            }
+//            return res;
+//        }
         
         
         //----------------------------------------------------------------------
@@ -129,7 +163,7 @@ namespace fbide {
         
     private:
         
-        using Storage   = boost::variant<VARIANT_TYPE_LIST>;
+        using Storage   = boost::variant<FBIDE_CONFIG_TYPES>;
         using Container = std::shared_ptr<Storage>;
         
         Container m_val;

@@ -14,21 +14,32 @@ using namespace fbide;
 int main(int argc, const char * argv[])
 {
 
-    Config val{"Hello"};
+    Config conf(Config::Array{1, 3, 5});
     
-    if (auto v = val.Get<bool>()) {
-        *v = true;
+    if (auto arr = conf.GetArray()) {
+        for (auto val : *arr) {
+            if (auto i = val.GetInt()) {
+                *i *= 2;
+                std::cout << "i = " << *i << '\n';
+            }
+        }
     }
     
-    if (auto v = val.Get<bool>()) {
-        std::cout << "v = " << *v << '\n';
+    
+    if (auto arr = conf.GetArray<int>()) {
+        for (auto i : *arr) {
+            i *= 2;
+            std::cout << "i = " << i << '\n';
+        }
     }
     
-    if (auto s = val.GetString()) {
-        std::cout << "s = " << *s << '\n';
+    
+    if (auto arr = conf.GetArray<int>()) {
+        for (auto i : *arr) {
+            std::cout << "i = " << i << '\n';
+        }
     }
-        
-    std::cout << "val type is " << val.GetTypeName() << '\n';
+    
     
     return 0;
 }
