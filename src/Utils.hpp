@@ -13,6 +13,7 @@
 #include <vector>
 
 #include <boost/variant.hpp>
+
 #if __has_include(<optional>)                // Check for a standard library
     #include<optional>
     using std::optional;

@@ -9,7 +9,8 @@
 #include "Utils.hpp"
 
 #define FBIDE_CONFIG_VAL_TYPES  String, bool, int, double
-#define FBIDE_CONFIG_TYPES      std::nullptr_t, FBIDE_CONFIG_VAL_TYPES, Array, Map
+#define FBIDE_CONFIG_REF_TYPES  Array, Map
+#define FBIDE_CONFIG_TYPES      std::nullptr_t, FBIDE_CONFIG_VAL_TYPES, FBIDE_CONFIG_REF_TYPES
 
 //
 // Goal:
@@ -30,7 +31,7 @@ namespace fbide {
         
         using Map   = StringMap<Config>;
         using Array = std::vector<Config>;
-        
+
         /**
          * Types of values that Config can hold
          */
@@ -74,19 +75,14 @@ namespace fbide {
         // Get values
         //----------------------------------------------------------------------
         
-        inline const optional<String> GetString() const { return Get<String>(); }
+        inline auto GetString() const { return Get<String>(); }
+        inline auto GetBool()   const { return Get<bool>(); }
+        inline auto GetInt()    const { return Get<int>(); }
+        inline auto GetDouble() const { return Get<double>(); }
+        inline auto GetArray()  const { return Get<Array>(); }
+        inline auto GetMap()    const { return Get<Map>(); }
         
-        inline const optional<bool> GetBool() const { return Get<bool>(); }
-        
-        inline const optional<int> GetInt() const { return Get<int>(); }
-        
-        inline const optional<double> GetDouble() const { return Get<double>(); }
-        
-        inline const optional<Array> GetArray() const { return Get<Array>(); }
-        
-        inline const optional<Map> GetMap() const { return Get<Map>(); }
-        
-        template<typename T, typename = std::enable_if<is_one_of<T, FBIDE_CONFIG_TYPES>()>>
+        template<typename T, typename = typename std::enable_if<is_one_of<T, FBIDE_CONFIG_TYPES>()>::type>
         inline const optional<T> Get() const
         {
             if (m_val->type() == typeid(T)) {
@@ -95,7 +91,8 @@ namespace fbide {
             return {};
         }
         
-        template<typename T, typename = std::enable_if<is_one_of<T, FBIDE_CONFIG_VAL_TYPES>()>>
+        
+        template<typename T, typename = typename std::enable_if<is_one_of<T, FBIDE_CONFIG_VAL_TYPES>()>::type>
         inline const optional<std::vector<T>> AsArray() const
         {
             if (!IsArray()) {
@@ -105,6 +102,22 @@ namespace fbide {
             for (auto & value : boost::get<Array&>(*m_val)) {
                 if (value.m_val->type() == typeid(T)) {
                     res->emplace_back(boost::get<T>(*value.m_val));
+                }
+            }
+            return res;
+        }
+        
+        
+        template<typename T, typename = typename std::enable_if<is_one_of<T, FBIDE_CONFIG_VAL_TYPES>()>::type>
+        inline const optional<StringMap<T>> AsMap() const
+        {
+            if (!IsMap()) {
+                return {};
+            }
+            auto res = make_optional(StringMap<T>());
+            for (auto & entry : boost::get<Map&>(*m_val)) {
+                if (entry.second.m_val->type() == typeid(T)) {
+                    res->emplace(std::make_pair(entry.first, boost::get<T>(*entry.second.m_val)));
                 }
             }
             return res;
