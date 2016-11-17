@@ -13,7 +13,23 @@
 #include <vector>
 
 #include <boost/variant.hpp>
-#include <boost/optional.hpp>
+#if __has_include(<optional>)                // Check for a standard library
+    #include<optional>
+    using std::optional;
+    using std::make_optional;
+#elif __has_include(<experimental/optional>) // Check for an experimental version
+    #include <experimental/optional>
+    using std::experimental::optional;
+    using std::experimental::make_optional;
+#elif __has_include(<boost/optional.hpp>)    // Try with an external library
+    #include <boost/optional.hpp>
+    using boost::optional;
+    using boost::make_optional;
+#else                                        // Not found at all
+    #error "Missing <optional>"
+#endif
+
+
 
 namespace fbide {
     

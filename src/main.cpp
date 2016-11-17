@@ -16,30 +16,11 @@ int main(int argc, const char * argv[])
 
     Config conf(Config::Array{1, 3, 5});
     
-    if (auto arr = conf.GetArray()) {
-        for (auto val : *arr) {
-            if (auto i = val.GetInt()) {
-                *i *= 2;
-                std::cout << "i = " << *i << '\n';
-            }
-        }
-    }
-    
-    
-    if (auto arr = conf.GetArray<int>()) {
-        for (auto i : *arr) {
-            i *= 2;
-            std::cout << "i = " << i << '\n';
-        }
-    }
-    
-    
-    if (auto arr = conf.GetArray<int>()) {
+    if (auto arr = conf.AsArray<int>()) {
         for (auto i : *arr) {
             std::cout << "i = " << i << '\n';
         }
     }
-    
     
     return 0;
 }

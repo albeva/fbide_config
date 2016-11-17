@@ -8,7 +8,8 @@
 #pragma once
 #include "Utils.hpp"
 
-#define FBIDE_CONFIG_TYPES std::nullptr_t, String, bool, int, double, Array, Map
+#define FBIDE_CONFIG_VAL_TYPES  String, bool, int, double
+#define FBIDE_CONFIG_TYPES      std::nullptr_t, FBIDE_CONFIG_VAL_TYPES, Array, Map
 
 //
 // Goal:
@@ -73,77 +74,41 @@ namespace fbide {
         // Get values
         //----------------------------------------------------------------------
         
-        inline const boost::optional<String&> GetString() { return Get<String>(); }
-        inline const boost::optional<const String&> GetString() const { return Get<String>(); }
+        inline const optional<String> GetString() const { return Get<String>(); }
         
-        inline const boost::optional<bool &> GetBool() { return Get<bool>(); }
-        inline const boost::optional<const bool &> GetBool() const { return Get<bool>(); }
+        inline const optional<bool> GetBool() const { return Get<bool>(); }
         
-        inline const boost::optional<int &> GetInt() { return Get<int>(); }
-        inline const boost::optional<const int &> GetInt() const { return Get<int>(); }
+        inline const optional<int> GetInt() const { return Get<int>(); }
         
-        inline const boost::optional<double &> GetDouble() { return Get<double>(); }
-        inline const boost::optional<const double &> GetDouble() const { return Get<double>(); }
+        inline const optional<double> GetDouble() const { return Get<double>(); }
         
-        inline const boost::optional<Array &> GetArray() { return Get<Array>(); }
-        inline const boost::optional<const Array &> GetArray() const { return Get<Array>(); }
+        inline const optional<Array> GetArray() const { return Get<Array>(); }
         
-        inline const boost::optional<Map &> GetMap() { return Get<Map>(); }
-        inline const boost::optional<const Map &> GetMap() const { return Get<Map>(); }
-        
+        inline const optional<Map> GetMap() const { return Get<Map>(); }
         
         template<typename T, typename = std::enable_if<is_one_of<T, FBIDE_CONFIG_TYPES>()>>
-        inline const boost::optional<T&> Get()
+        inline const optional<T> Get() const
         {
             if (m_val->type() == typeid(T)) {
-                return {boost::get<T&>(*m_val)};
+                return optional<T>{boost::get<T>(*m_val)};
             }
             return {};
         }
         
-        
-        template<typename T, typename = std::enable_if<is_one_of<T, FBIDE_CONFIG_TYPES>()>>
-        inline const boost::optional<const T&> Get() const
-        {
-            if (m_val->type() == typeid(T)) {
-                return {boost::get<T&>(*m_val)};
-            }
-            return {};
-        }
-        
-        
-        template<typename T, typename = std::enable_if<is_one_of<T,  std::nullptr_t, String, bool, int, double>()>, typename ArrayType = std::vector<std::reference_wrapper<T>>>
-        inline const boost::optional<ArrayType> GetArray()
+        template<typename T, typename = std::enable_if<is_one_of<T, FBIDE_CONFIG_VAL_TYPES>()>>
+        inline const optional<std::vector<T>> AsArray() const
         {
             if (!IsArray()) {
                 return {};
             }
-            auto & arr = boost::get<Array&>(*m_val);
-            auto res = boost::make_optional(ArrayType());
-            for (auto & value : arr) {
+            auto res = make_optional(std::vector<T>());
+            for (auto & value : boost::get<Array&>(*m_val)) {
                 if (value.m_val->type() == typeid(T)) {
-                    res->emplace_back(boost::get<T&>(*value.m_val));
+                    res->emplace_back(boost::get<T>(*value.m_val));
                 }
             }
             return res;
         }
-        
-        
-//        template<typename T, typename = std::enable_if<is_one_of<T, FBIDE_CONFIG_TYPES>()>, typename ArrayType = std::vector<std::reference_wrapper<const T>>>
-//        inline const boost::optional<ArrayType> GetArray() const
-//        {
-//            if (!IsArray()) {
-//                return {};
-//            }
-//            auto & arr = boost::get<Array&>(*m_val);
-//            auto res = boost::make_optional(ArrayType());
-//            for (auto & value : arr) {
-//                if (value.m_val->type() == typeid(T)) {
-//                    res->emplace_back(boost::get<T&>(*value.m_val));
-//                }
-//            }
-//            return res;
-//        }
         
         
         //----------------------------------------------------------------------
