@@ -14,6 +14,7 @@
 
 using namespace fbide;
 
+
 BOOST_AUTO_TEST_CASE(construct_config)
 {
     // default

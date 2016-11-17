@@ -16,7 +16,6 @@
 using namespace fbide;
 
 
-
 Config::Type foo(const Config & config)
 {
     return config.GetType();
