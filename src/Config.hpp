@@ -44,32 +44,79 @@ namespace fbide {
         /**
          * By default Config will hold null value
          */
-        Config() :                         m_val(std::make_shared<Storage>(nullptr)) {}
-        Config(std::nullptr_t) :           Config() {}
-        Config(const Config & other) :     m_val(other.m_val) {}
-        Config(Config && other) noexcept : m_val(std::move(other.m_val)) {}
+        Config(): m_cnt{new Container{nullptr}} {}
+        
+        Config(std::nullptr_t): Config() {}
+        
+        Config(const Config & other) noexcept : m_cnt(other.m_cnt)
+        {
+            m_cnt->m_counter += 1;
+        }
+        
+        Config(Config && other) noexcept : m_cnt(other.m_cnt)
+        {
+            other.m_cnt = nullptr;
+        }
+        
+        ~Config()
+        {
+            if (m_cnt == nullptr) {
+                return;
+            }
+            m_cnt->m_counter -= 1;
+            if (m_cnt->m_counter == 0) {
+                delete m_cnt;
+            }
+            m_cnt = nullptr;
+        }
+        
+        Config & operator = (const Config & other)
+        {
+            if (m_cnt != other.m_cnt) {
+                m_cnt->m_counter -= 1;
+                if (m_cnt->m_counter == 0) {
+                    delete m_cnt;
+                }
+                m_cnt = other.m_cnt;
+                m_cnt->m_counter += 1;
+            }
+            return *this;
+        }
+        
+        Config & operator = (Config && other)
+        {
+            if (this != &other) {
+                m_cnt->m_counter -= 1;
+                if (m_cnt->m_counter == 0) {
+                    delete m_cnt;
+                }
+                m_cnt = other.m_cnt;
+                other.m_cnt = nullptr;
+            }
+            return *this;
+        }
         
         // String
-        Config(const char * value) :      m_val(std::make_shared<Storage>(String{value})) {}
-        Config(const String & value) :    m_val(std::make_shared<Storage>(value)) {}
-        Config(String && value) noexcept: m_val(std::make_shared<Storage>(std::move(value))) {}
+        Config(const char * value) :      m_cnt{new Container{String{value}}} {}
+        Config(const String & value) :    m_cnt{new Container{value}} {}
+        Config(String && value) noexcept: m_cnt{new Container{std::move(value)}} {}
         
         // Bool
-        Config(bool value) : m_val(std::make_shared<Storage>(value)) {}
+        Config(bool value) : m_cnt{new Container{value}} {}
         
         // Int
-        Config(int value) : m_val(std::make_shared<Storage>(value)) {}
+        Config(int value) : m_cnt{new Container{value}} {}
         
         // Double
-        Config(double value) : m_val(std::make_shared<Storage>(value)) {}
+        Config(double value) : m_cnt{new Container{value}} {}
 
         // Array
-        Config(const Array & value) :    m_val(std::make_shared<Storage>(value)) {}
-        Config(Array && value) noexcept: m_val(std::make_shared<Storage>(std::move(value))) {}
+        Config(const Array & value) :    m_cnt{new Container{value}} {}
+        Config(Array && value) noexcept: m_cnt{new Container{std::move(value)}} {}
 
         // Map
-        Config(const Map & value) :    m_val(std::make_shared<Storage>(value)) {}
-        Config(Map && value) noexcept: m_val(std::make_shared<Storage>(std::move(value))) {}
+        Config(const Map & value) :    m_cnt{new Container{value}} {}
+        Config(Map && value) noexcept: m_cnt{new Container{std::move(value)}} {}
         
         //----------------------------------------------------------------------
         // Get values
@@ -85,8 +132,9 @@ namespace fbide {
         template<typename T, typename = typename std::enable_if<is_one_of<T, FBIDE_CONFIG_TYPES>()>::type>
         inline const optional<T> Get() const
         {
-            if (m_val->type() == typeid(T)) {
-                return optional<T>{boost::get<T>(*m_val)};
+            auto & v = m_cnt->m_value;
+            if (v.type() == typeid(T)) {
+                return optional<T>{boost::get<T>(v)};
             }
             return {};
         }
@@ -99,9 +147,10 @@ namespace fbide {
                 return {};
             }
             auto res = make_optional(std::vector<T>());
-            for (auto & value : boost::get<Array&>(*m_val)) {
-                if (value.m_val->type() == typeid(T)) {
-                    res->emplace_back(boost::get<T>(*value.m_val));
+            for (auto & value : boost::get<Array&>(m_cnt->m_value)) {
+                auto & v = value.m_cnt->m_value;
+                if (v.type() == typeid(T)) {
+                    res->emplace_back(boost::get<T>(v));
                 }
             }
             return res;
@@ -115,9 +164,10 @@ namespace fbide {
                 return {};
             }
             auto res = make_optional(StringMap<T>());
-            for (auto & entry : boost::get<Map&>(*m_val)) {
-                if (entry.second.m_val->type() == typeid(T)) {
-                    res->emplace(std::make_pair(entry.first, boost::get<T>(*entry.second.m_val)));
+            for (auto & entry : boost::get<Map&>(m_cnt->m_value)) {
+                auto & v = entry.second.m_cnt->m_value;
+                if (v.type() == typeid(T)) {
+                    res->emplace(std::make_pair(entry.first, boost::get<T>(v)));
                 }
             }
             return res;
@@ -130,7 +180,7 @@ namespace fbide {
         
         
         String GetTypeName() const;
-        inline Type GetType()  const { return (Type)m_val->which(); }
+        inline Type GetType()  const { return (Type)m_cnt->m_value.which(); }
         inline bool IsNull()   const { return GetType() == Type::Null; }
         inline bool IsString() const { return GetType() == Type::String; }
         inline bool IsBool()   const { return GetType() == Type::Bool; }
@@ -141,10 +191,12 @@ namespace fbide {
         
     private:
         
-        using Storage   = boost::variant<FBIDE_CONFIG_TYPES>;
-        using Container = std::shared_ptr<Storage>;
+        struct Container {
+            boost::variant<FBIDE_CONFIG_TYPES> m_value;
+            unsigned int m_counter = 1;
+        };
         
-        Container m_val;
+        Container * m_cnt;
     };
     
     /**

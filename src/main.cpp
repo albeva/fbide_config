@@ -13,7 +13,6 @@ using namespace fbide;
 
 int main(int argc, const char * argv[])
 {
-
     Config conf(Config::Array{"Hi", 3, 2.5, false});
     
     if (auto arr = conf.GetArray()) {
@@ -27,8 +26,7 @@ int main(int argc, const char * argv[])
             std::cout << "s = " << i << '\n';
         }
     }
-    
-    
+        
     Config mcfg{Config::Map{{"key", "val"}, {"lang", "en"}}};
     if (auto map = mcfg.AsMap<String>()) {
         for (auto & entry : *map) {
