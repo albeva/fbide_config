@@ -42,86 +42,39 @@ namespace fbide {
         
         
         //----------------------------------------------------------------------
-        // Construct, assign (copy, move)
+        // Default and nullptr_t. Others let compiler generate automatically
         //----------------------------------------------------------------------
         
-        Config(): m_cnt{new Container{nullptr}} {}
-        
+        Config(): m_cnt{std::make_shared<Container>(nullptr)} {}
         Config(std::nullptr_t): Config() {}
         
-        Config(const Config & other) noexcept : m_cnt(other.m_cnt)
-        {
-            m_cnt->m_counter += 1;
-        }
-        
-        Config(Config && other) noexcept : m_cnt(other.m_cnt)
-        {
-            other.m_cnt = nullptr;
-        }
-        
-        ~Config()
-        {
-            if (m_cnt == nullptr) {
-                return;
-            }
-            m_cnt->m_counter -= 1;
-            if (m_cnt->m_counter == 0) {
-                delete m_cnt;
-            }
-            m_cnt = nullptr;
-        }
-        
-        Config & operator = (const Config & other)
-        {
-            if (m_cnt != other.m_cnt) {
-                m_cnt->m_counter -= 1;
-                if (m_cnt->m_counter == 0) {
-                    delete m_cnt;
-                }
-                m_cnt = other.m_cnt;
-                m_cnt->m_counter += 1;
-            }
-            return *this;
-        }
-        
-        Config & operator = (Config && other)
-        {
-            if (this != &other) {
-                m_cnt->m_counter -= 1;
-                if (m_cnt->m_counter == 0) {
-                    delete m_cnt;
-                }
-                m_cnt = other.m_cnt;
-                other.m_cnt = nullptr;
-            }
-            return *this;
-        }
         
         //----------------------------------------------------------------------
         // Construct from values
         //----------------------------------------------------------------------
         
         // String
-        Config(const char * value) :      m_cnt{new Container{String{value}}} {}
-        Config(const String & value) :    m_cnt{new Container{value}} {}
-        Config(String && value) noexcept: m_cnt{new Container{std::move(value)}} {}
+        Config(const char * value) :      m_cnt{std::make_shared<Container>(String{value})} {}
+        Config(const String & value) :    m_cnt{std::make_shared<Container>(value)} {}
+        Config(String && value) noexcept: m_cnt{std::make_shared<Container>(std::move(value))} {}
         
         // Bool
-        Config(bool value) : m_cnt{new Container{value}} {}
+        Config(bool value) : m_cnt{std::make_shared<Container>(value)} {}
         
         // Int
-        Config(int value) : m_cnt{new Container{value}} {}
+        Config(int value) : m_cnt{std::make_shared<Container>(value)} {}
         
         // Double
-        Config(double value) : m_cnt{new Container{value}} {}
+        Config(double value) : m_cnt{std::make_shared<Container>(value)} {}
 
         // Array
-        Config(const Array & value) :    m_cnt{new Container{value}} {}
-        Config(Array && value) noexcept: m_cnt{new Container{std::move(value)}} {}
+        Config(const Array & value) :    m_cnt{std::make_shared<Container>(value)} {}
+        Config(Array && value) noexcept: m_cnt{std::make_shared<Container>(std::move(value))} {}
 
         // Map
-        Config(const Map & value) :    m_cnt{new Container{value}} {}
-        Config(Map && value) noexcept: m_cnt{new Container{std::move(value)}} {}
+        Config(const Map & value) :    m_cnt{std::make_shared<Container>(value)} {}
+        Config(Map && value) noexcept: m_cnt{std::make_shared<Container>(std::move(value))} {}
+        
         
         //----------------------------------------------------------------------
         // Assign values
@@ -129,19 +82,19 @@ namespace fbide {
         
         // String
         
-        inline Config & operator = (const char * val)
+        inline Config & operator = (const char * val) noexcept
         {
             m_cnt->m_value = String(val);
             return *this;
         }
         
-        inline Config & operator = (const String & val)
+        inline Config & operator = (const String & val) noexcept
         {
             m_cnt->m_value = val;
             return *this;
         }
         
-        inline Config & operator = (String && val)
+        inline Config & operator = (String && val) noexcept
         {
             m_cnt->m_value = std::move(val);
             return *this;
@@ -150,7 +103,7 @@ namespace fbide {
         // nullptr, bool, int, double
         
         template<typename T, typename = typename std::enable_if<is_one_of<T, FBIDE_CONFIG_VAL_ASSIGN>()>::type>
-        inline Config & operator = (T val)
+        inline Config & operator = (T val) noexcept
         {
             m_cnt->m_value = std::move(val);
             return *this;
@@ -158,13 +111,13 @@ namespace fbide {
         
         // Array
         
-        inline Config & operator = (const Array & val)
+        inline Config & operator = (const Array & val) noexcept
         {
             m_cnt->m_value = val;
             return *this;
         }
         
-        inline Config & operator = (Array && val)
+        inline Config & operator = (Array && val) noexcept
         {
             m_cnt->m_value = std::move(val);
             return *this;
@@ -172,31 +125,69 @@ namespace fbide {
         
         // Map
         
-        inline Config & operator = (const Map & val)
+        inline Config & operator = (const Map & val) noexcept
         {
             m_cnt->m_value = val;
             return *this;
         }
         
-        inline Config & operator = (Map && val)
+        inline Config & operator = (Map && val) noexcept
         {
             m_cnt->m_value = std::move(val);
             return *this;
         }
         
+
+        //----------------------------------------------------------------------
+        // Comparison, Config, const char*, values
+        //----------------------------------------------------------------------
+        
+        bool operator == (const Config & rhs) const noexcept;
+        
+        bool operator != (const Config & rhs) const noexcept
+        {
+            return !operator==(rhs);
+        }
+        
+        inline bool operator==(const char * rhs) const noexcept
+        {
+            return operator==(String(rhs));
+        }
+        inline bool operator!=(const char * rhs) const noexcept
+        {
+            return operator!=(String(rhs));
+        }
+        
+        template<typename T, typename = typename std::enable_if<is_one_of<T, FBIDE_CONFIG_TYPES>()>::type>
+        inline bool operator==(const T& rhs) const noexcept
+        {
+            auto & v = m_cnt->m_value;
+            if (v.type() == typeid(T)) {
+                return boost::get<T&>(v) == rhs;
+            }
+            return false;
+        }
+        
+        template<typename T, typename = typename std::enable_if<is_one_of<T, FBIDE_CONFIG_TYPES>()>::type>
+        inline bool operator!=(const T& rhs) const noexcept
+        {
+            return !operator==(rhs);
+        }
+        
+        
         //----------------------------------------------------------------------
         // Get values
         //----------------------------------------------------------------------
         
-        inline auto GetString() const { return Get<String>(); }
-        inline auto GetBool()   const { return Get<bool>(); }
-        inline auto GetInt()    const { return Get<int>(); }
-        inline auto GetDouble() const { return Get<double>(); }
-        inline auto GetArray()  const { return Get<Array>(); }
-        inline auto GetMap()    const { return Get<Map>(); }
+        inline auto GetString() const noexcept { return Get<String>(); }
+        inline auto GetBool()   const noexcept { return Get<bool>(); }
+        inline auto GetInt()    const noexcept { return Get<int>(); }
+        inline auto GetDouble() const noexcept { return Get<double>(); }
+        inline auto GetArray()  const noexcept { return Get<Array>(); }
+        inline auto GetMap()    const noexcept { return Get<Map>(); }
         
         template<typename T, typename = typename std::enable_if<is_one_of<T, FBIDE_CONFIG_TYPES>()>::type>
-        inline const optional<T> Get() const
+        inline const optional<T> Get() const noexcept
         {
             auto & v = m_cnt->m_value;
             if (v.type() == typeid(T)) {
@@ -207,7 +198,7 @@ namespace fbide {
         
         
         template<typename T, typename = typename std::enable_if<is_one_of<T, FBIDE_CONFIG_VAL_TYPES>()>::type>
-        inline const optional<std::vector<T>> AsArray() const
+        inline const optional<std::vector<T>> AsArray() const noexcept
         {
             if (!IsArray()) {
                 return {};
@@ -226,7 +217,7 @@ namespace fbide {
         
         
         template<typename T, typename = typename std::enable_if<is_one_of<T, FBIDE_CONFIG_VAL_TYPES>()>::type>
-        inline const optional<StringMap<T>> AsMap() const
+        inline const optional<StringMap<T>> AsMap() const noexcept
         {
             if (!IsMap()) {
                 return {};
@@ -246,29 +237,37 @@ namespace fbide {
         // Query value type
         //----------------------------------------------------------------------
         
-        
-        String GetTypeName() const;
-        inline Type GetType()  const { return (Type)m_cnt->m_value.which(); }
-        inline bool IsNull()   const { return GetType() == Type::Null; }
-        inline bool IsString() const { return GetType() == Type::String; }
-        inline bool IsBool()   const { return GetType() == Type::Bool; }
-        inline bool IsInt()    const { return GetType() == Type::Int; }
-        inline bool IsDouble() const { return GetType() == Type::Double; }
-        inline bool IsArray()  const { return GetType() == Type::Array; }
-        inline bool IsMap()    const { return GetType() == Type::Map; }
+        String GetTypeName() const noexcept;
+        inline Type GetType()  const noexcept { return (Type)m_cnt->m_value.which(); }
+        inline bool IsNull()   const noexcept { return GetType() == Type::Null; }
+        inline bool IsString() const noexcept { return GetType() == Type::String; }
+        inline bool IsBool()   const noexcept { return GetType() == Type::Bool; }
+        inline bool IsInt()    const noexcept { return GetType() == Type::Int; }
+        inline bool IsDouble() const noexcept { return GetType() == Type::Double; }
+        inline bool IsArray()  const noexcept { return GetType() == Type::Array; }
+        inline bool IsMap()    const noexcept { return GetType() == Type::Map; }
         
     private:
-        
+        using ValueType = boost::variant<FBIDE_CONFIG_TYPES>;
         struct Container {
-            boost::variant<FBIDE_CONFIG_TYPES> m_value;
-            unsigned int m_counter = 1;
+            ValueType m_value;
+            Container(ValueType && value) : m_value(std::move(value)) {}
         };
+        std::shared_ptr<Container> m_cnt;
         
-        Container * m_cnt;
+        template<typename T>
+        inline T& value() noexcept
+        {
+            return boost::get<T&>(m_cnt->m_value);
+        }
+        
+        template<typename T>
+        inline const T& as() const noexcept
+        {
+            return boost::get<const T&>(m_cnt->m_value);
+        }
     };
-    
-    /**
-     * Print the type to the stream
-     */
+
+    std::ostream& operator << (std::ostream& stream, const Config& type);
     std::ostream& operator << (std::ostream& stream, const Config::Type& type);
 }

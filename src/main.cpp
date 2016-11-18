@@ -13,8 +13,13 @@ using namespace fbide;
 
 int main(int argc, const char * argv[])
 {
-    Config c;
-
+    Config c1{10};
+    
+    if (c1 == 10) {
+        std::cout << "are equal\n";
+    } else {
+        std::cout << "are not equal\n";
+    }
     
     return 0;
 }
