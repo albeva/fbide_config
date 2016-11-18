@@ -148,6 +148,7 @@ namespace fbide {
         {
             return operator==(String(rhs));
         }
+        
         inline bool operator!=(const char * rhs) const noexcept
         {
             return operator!=(String(rhs));
@@ -251,7 +252,7 @@ namespace fbide {
         std::shared_ptr<Container> m_cnt;
         
         template<typename T>
-        inline T& value() noexcept
+        inline T& as() noexcept
         {
             return boost::get<T&>(m_cnt->m_value);
         }
