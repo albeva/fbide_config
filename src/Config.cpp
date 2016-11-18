@@ -28,7 +28,6 @@ bool Config::operator == (const Config & rhs) const noexcept
         case Type::Double:  return as<double>() == rhs.as<double>();
         case Type::Array:   return as<Array>()  == rhs.as<Array>();
         case Type::Map:     return as<Map>()    == rhs.as<Map>();
-        default:            return false;
     }
 }
 
