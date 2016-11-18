@@ -9,8 +9,8 @@
 #include "Utils.hpp"
 
 #define FBIDE_CONFIG_VAL_TYPES  String, bool, int, double
-#define FBIDE_CONFIG_REF_TYPES  Array, Map
-#define FBIDE_CONFIG_TYPES      std::nullptr_t, FBIDE_CONFIG_VAL_TYPES, FBIDE_CONFIG_REF_TYPES
+#define FBIDE_CONFIG_TYPES      std::nullptr_t, FBIDE_CONFIG_VAL_TYPES, Array, Map
+#define FBIDE_CONFIG_VAL_ASSIGN std::nullptr_t, bool, int, double
 
 //
 // Goal:
@@ -41,9 +41,10 @@ namespace fbide {
         };
         
         
-        /**
-         * By default Config will hold null value
-         */
+        //----------------------------------------------------------------------
+        // Construct, assign (copy, move)
+        //----------------------------------------------------------------------
+        
         Config(): m_cnt{new Container{nullptr}} {}
         
         Config(std::nullptr_t): Config() {}
@@ -96,6 +97,10 @@ namespace fbide {
             return *this;
         }
         
+        //----------------------------------------------------------------------
+        // Construct from values
+        //----------------------------------------------------------------------
+        
         // String
         Config(const char * value) :      m_cnt{new Container{String{value}}} {}
         Config(const String & value) :    m_cnt{new Container{value}} {}
@@ -117,6 +122,67 @@ namespace fbide {
         // Map
         Config(const Map & value) :    m_cnt{new Container{value}} {}
         Config(Map && value) noexcept: m_cnt{new Container{std::move(value)}} {}
+        
+        //----------------------------------------------------------------------
+        // Assign values
+        //----------------------------------------------------------------------
+        
+        // String
+        
+        inline Config & operator = (const char * val)
+        {
+            m_cnt->m_value = String(val);
+            return *this;
+        }
+        
+        inline Config & operator = (const String & val)
+        {
+            m_cnt->m_value = val;
+            return *this;
+        }
+        
+        inline Config & operator = (String && val)
+        {
+            m_cnt->m_value = std::move(val);
+            return *this;
+        }
+        
+        // nullptr, bool, int, double
+        
+        template<typename T, typename = typename std::enable_if<is_one_of<T, FBIDE_CONFIG_VAL_ASSIGN>()>::type>
+        inline Config & operator = (T val)
+        {
+            m_cnt->m_value = std::move(val);
+            return *this;
+        }
+        
+        // Array
+        
+        inline Config & operator = (const Array & val)
+        {
+            m_cnt->m_value = val;
+            return *this;
+        }
+        
+        inline Config & operator = (Array && val)
+        {
+            m_cnt->m_value = std::move(val);
+            return *this;
+        }
+        
+        // Map
+        
+        inline Config & operator = (const Map & val)
+        {
+            m_cnt->m_value = val;
+            return *this;
+        }
+        
+        inline Config & operator = (Map && val)
+        {
+            m_cnt->m_value = std::move(val);
+            return *this;
+        }
         
         //----------------------------------------------------------------------
         // Get values
@@ -147,7 +213,9 @@ namespace fbide {
                 return {};
             }
             auto res = make_optional(std::vector<T>());
-            for (auto & value : boost::get<Array&>(m_cnt->m_value)) {
+            auto & arr = boost::get<Array&>(m_cnt->m_value);
+            res->reserve(arr.size());
+            for (auto & value : arr) {
                 auto & v = value.m_cnt->m_value;
                 if (v.type() == typeid(T)) {
                     res->emplace_back(boost::get<T>(v));
