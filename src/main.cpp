@@ -15,7 +15,7 @@ int main(int argc, const char * argv[])
 {
     Config c1{10};
     
-    if (c1 == 10) {
+    if (c1 != "hello") {
         std::cout << "are equal\n";
     } else {
         std::cout << "are not equal\n";

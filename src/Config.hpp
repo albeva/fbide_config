@@ -144,11 +144,6 @@ namespace fbide {
         
         bool operator == (const Config & rhs) const noexcept;
         
-        bool operator != (const Config & rhs) const noexcept
-        {
-            return !operator==(rhs);
-        }
-        
         inline bool operator==(const char * rhs) const noexcept
         {
             return operator==(String(rhs));
@@ -168,7 +163,7 @@ namespace fbide {
             return false;
         }
         
-        template<typename T, typename = typename std::enable_if<is_one_of<T, FBIDE_CONFIG_TYPES>()>::type>
+        template<typename T, typename = typename std::enable_if<is_one_of<T, Config, FBIDE_CONFIG_TYPES>()>::type>
         inline bool operator!=(const T& rhs) const noexcept
         {
             return !operator==(rhs);

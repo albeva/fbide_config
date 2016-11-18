@@ -62,4 +62,17 @@ BOOST_AUTO_TEST_CASE(equality)
     
     // nullptr
     BOOST_TEST((c != nullptr));
+    
+    // Config equality
+    Config c1, c2;
+    BOOST_TEST(c1 == c2);
+    
+    c1 = 10;
+    BOOST_TEST(c1 != c2);
+    
+    c2 = 10;
+    BOOST_TEST(c1 == c2);
+    
+    Config c3{c2};
+    BOOST_TEST(c3 == c2);
 }
