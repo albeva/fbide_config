@@ -21,50 +21,14 @@ bool Config::operator == (const Config & rhs) const noexcept
     }
 
     switch(GetType()) {
-        case Type::Null:
-        {
-            return true;
-        }
-        case Type::String:
-        {
-            auto & l = as<String>();
-            auto & r = rhs.as<String>();
-            return l == r;
-        }
-        case Type::Bool:
-        {
-            auto & l = as<bool>();
-            auto & r = rhs.as<bool>();
-            return l == r;
-        }
-        case Type::Int:
-        {
-            auto & l = as<int>();
-            auto & r = rhs.as<int>();
-            return l == r;
-        }
-        case Type::Double:
-        {
-            auto & l = as<double>();
-            auto & r = rhs.as<double>();
-            return l == r;
-        }
-        case Type::Array:
-        {
-            auto & l = as<Array>();
-            auto & r = rhs.as<Array>();
-            return l == r;
-        }
-        case Type::Map:
-        {
-            auto & l = as<Map>();
-            auto & r = rhs.as<Map>();
-            return l == r;
-        }
-        default:
-        {
-            return false;
-        }
+        case Type::Null:    return true;
+        case Type::String:  return as<String>() == rhs.as<String>();
+        case Type::Bool:    return as<bool>()   == rhs.as<bool>();
+        case Type::Int:     return as<int>()    == rhs.as<int>();
+        case Type::Double:  return as<double>() == rhs.as<double>();
+        case Type::Array:   return as<Array>()  == rhs.as<Array>();
+        case Type::Map:     return as<Map>()    == rhs.as<Map>();
+        default:            return false;
     }
 }
 
