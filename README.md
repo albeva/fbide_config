@@ -10,3 +10,5 @@ This is experimental Config class that is basically a glorified variant data typ
 * Safe
 * Use reference semantics
 * Reasonable perfomance and memory usage
+* Unit tested
+* Ability to extend one config tree with another to provide default/overridden value functionality in the container
